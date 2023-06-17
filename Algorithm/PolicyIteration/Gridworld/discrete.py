@@ -2,6 +2,9 @@ import numpy as np
 
 from gym import Env, spaces
 from gym.utils import seeding
+"""
+add 'discrete.py' to gym package path 'xxxxx\\Lib\\site-packages\\gym\\envs\\toy_text'
+"""
 
 
 def categorical_sample(prob_n, np_random):
