@@ -62,7 +62,7 @@ def policy_iteration(env):
             print('Initial Policy: ')
             print(policy)
         policy_stable, policy = policy_improvement(v, policy)
-        print('Policy after Policy Implement: ')
+        print('Policy after Policy Improvement: ')
         print(policy)
         if policy_stable:
             return policy, v
