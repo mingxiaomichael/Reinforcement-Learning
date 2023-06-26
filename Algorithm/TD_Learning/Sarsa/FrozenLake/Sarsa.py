@@ -2,8 +2,10 @@ import gym
 import numpy as np
 
 
+
+
+
 if __name__ == "__main__":
-    # env = gym.make('FrozenLake-v0')
     env = gym.make("FrozenLake-v1", render_mode="human", is_slippery=False)
     print(env.action_space.n)
     print(env.observation_space.n)
