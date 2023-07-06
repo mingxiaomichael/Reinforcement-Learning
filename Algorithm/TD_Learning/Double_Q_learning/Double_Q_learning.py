@@ -38,3 +38,22 @@ class Env:
             reward = random.normalvariate(self.mu, self.sigma)
             return self.state, reward, True
 
+
+# Q-table
+# Because the number of actions per state is different
+# Using dictionary is better
+def init_Q_table(env):
+    Q = {env.STATE_A: {action: 0 for action in range(env.nA)},
+         env.STATE_B: {action: 0 for action in range(env.nB)},
+         env.Terminal: {action: 0 for action in range(env.nA)}}
+    return Q
+
+
+# epsilon-greedy policy
+def select_action_behavior_policy(action_value_dict, epsilon):
+    if np.random.uniform(0, 1) < epsilon:  # np.random.uniform(0, 1) include 0 but not include 1
+        action = random.sample(action_value_dict.keys(), 1)[0]  # random.sample() returns a list
+    else:
+        max_keys = [key for key, value in action_value_dict.items() if value == max(action_value_dict.values())]
+        action = random.choice(max_keys)
+    return action
