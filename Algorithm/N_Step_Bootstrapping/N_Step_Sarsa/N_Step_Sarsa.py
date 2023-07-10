@@ -2,6 +2,7 @@ import gym
 import numpy as np
 import random
 from gridworld_sv1 import GridworldEnv
+from plot import drawPlot
 
 
 def choose_action(state, epsilon):
@@ -65,4 +66,5 @@ if __name__ == "__main__":
     Q_value = n_step_sarsa(env, Q, n, epsilon, alpha, gamma, total_episodes=300, max_steps=100)
     optimal_policy = get_optimal_policy(Q_value)
     print(optimal_policy)
+    drawPlot(Q_value, env.OBSTACLE)
 

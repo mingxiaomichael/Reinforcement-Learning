@@ -11,6 +11,9 @@ How to use the environment 'gridworld_sv0.py':
     entry_point='gym.envs.toy_text:GridworldEnv',
     )
 """
+"""
+this python file can be used directly, do not use gym
+"""
 
 
 class GridworldEnv:
