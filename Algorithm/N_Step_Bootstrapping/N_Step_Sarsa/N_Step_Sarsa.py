@@ -15,26 +15,25 @@ def update(Q, s, a, r, s_next, a_next, alpha, gamma):
     Q[s, a] = Q[s, a] + alpha * increment
 
 
-def n_step_sarsa(Q, epsilon, alpha, gamma, total_episodes, max_steps):
-    # TBA
-    # for episode in range(total_episodes):
-    #     t = 0
-    #     s = env.reset()[0]
-    #     a = choose_action(s, epsilon)
-    #     while t < max_steps:
-    #         # Getting the next state
-    #         s_next, r, is_finished, _, prob = env.step(a)
-    #         # Choosing the next action
-    #         a_next = choose_action(s_next, epsilon)
-    #         update(Q, s, a, r, s_next, a_next, alpha, gamma)
-    #         s = s_next
-    #         a = a_next
-    #         t += 1
-    #         if r == -100:
-    #             break
-    #         if is_finished:
-    #             print(Q)
-    #             break
+def n_step_sarsa(Q, n, epsilon, alpha, gamma, total_episodes, max_steps):
+    for episode in range(total_episodes):
+        t = 0
+        s = env.reset()[0]
+        a = choose_action(s, epsilon)
+        while t < max_steps:
+            # Getting the next state
+            s_next, r, is_finished, _, prob = env.step(a)
+            # Choosing the next action
+            a_next = choose_action(s_next, epsilon)
+            update(Q, s, a, r, s_next, a_next, alpha, gamma)
+            s = s_next
+            a = a_next
+            t += 1
+            if r == -100:
+                break
+            if is_finished:
+                print(Q)
+                break
     return Q
 
 
@@ -60,10 +59,11 @@ def get_optimal_policy(Q):
 if __name__ == "__main__":
     env = gym.make("CliffWalking-v0")
     env.P[35][2][0] = (1.0, 47, 100, True)  # set the reward of the goal to 0
+    n = 5  # steps of n-step sarsa
     epsilon = 0.9
     alpha = 0.15  # control the increment
     gamma = 0.95  # the decay of reward
     Q = np.zeros([env.nS, env.nA])
-    Q_value = sarsa(Q, epsilon, alpha, gamma, total_episodes=1000, max_steps=500)
+    Q_value = n_step_sarsa(Q, n, epsilon, alpha, gamma, total_episodes=1000, max_steps=500)
     optimal_policy = get_optimal_policy(Q_value)
     print(optimal_policy)
