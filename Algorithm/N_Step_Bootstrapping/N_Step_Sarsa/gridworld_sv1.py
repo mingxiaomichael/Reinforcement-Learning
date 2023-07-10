@@ -32,6 +32,7 @@ class GridworldEnv:
 
     def __init__(self):
         self.shape = [5, 5]
+        self.action_space = [0, 1, 2, 3]
         self.UP = 0
         self.RIGHT = 1
         self.DOWN = 2
@@ -46,10 +47,10 @@ class GridworldEnv:
         self.MAX_X = self.shape[1]
 
         self.reward = -1 * np.ones(self.nS)
-        self.reward[self.nS - 1] = 0
+        self.reward[self.nS - 1] = 100
         for s in range(self.nS):
             if s in self.OBSTACLE:
-                self.reward[s] = -10
+                self.reward[s] = -5
         # state transition probability
         self.P = {}
         grid = np.arange(self.nS).reshape(self.shape)
@@ -85,4 +86,6 @@ class GridworldEnv:
 
     def step(self, action):
         # next_state, reward, is_finished
-        return self.P[self.state][action][0]
+        _, next_state, reward, is_finished = self.P[self.state][action][0]
+        self.state = next_state
+        return next_state, reward, is_finished
