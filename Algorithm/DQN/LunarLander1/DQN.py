@@ -10,7 +10,7 @@ class DeepQNetwork(nn.Module):
         super(DeepQNetwork, self).__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
-        self.fc2.dims = fc2_dims
+        self.fc2_dims = fc2_dims
         self.n_actions = n_actions
         self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims)  # full connected layer 1
         self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
@@ -29,7 +29,7 @@ class DeepQNetwork(nn.Module):
 
 class Agent():
     def __init__(self, gamma, epsilon, lr, input_dims, batch_size, n_actions,
-                 max_mem_size=100000, eps_end=0.01, eps_dec=5e-4):
+                 max_mem_size=100000, eps_end=0.01, eps_dec=0.005):
         self.gamma = gamma
         self.epsilon = epsilon
         self.epsilon_min = eps_end
@@ -46,7 +46,7 @@ class Agent():
         self.new_state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool)
+        self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool8)
 
     def store_transition(self, state, action, reward, state_, done):
         index = self.mem_cntr % self.mem_size
@@ -90,6 +90,5 @@ class Agent():
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
         self.Q_eval.optimizer.step()
-
-        self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.epsilon_min else self.epsilon_min
+        # self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.epsilon_min else self.epsilon_min
 
