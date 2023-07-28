@@ -6,16 +6,20 @@ import numpy as np
 
 
 class DeepQNetwork(nn.Module):
+    """
+    The structure of Deep Q Network: 3 full connected layer
+    Input: state (len=8) --> DQN --> Output: Q value (len=4, 4 actions)
+    """
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
         super(DeepQNetwork, self).__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
         self.n_actions = n_actions
-        self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims)  # full connected layer 1
-        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)
-        self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)
-        self.optimizer = optim.Adam(self.parameters(), lr=lr)
+        self.fc1 = nn.Linear(*self.input_dims, self.fc1_dims)  # full connected layer 1, (8, 256)
+        self.fc2 = nn.Linear(self.fc1_dims, self.fc2_dims)  # full connected layer 2, (256, 256)
+        self.fc3 = nn.Linear(self.fc2_dims, self.n_actions)  # full connected layer 3, (256, 4)
+        self.optimizer = optim.Adam(self.parameters(), lr=lr)  # gradient descent, lr=0.003
         self.loss = nn.MSELoss()
         self.device = T.device('cuda:0' if T.cuda.is_available() else 'cpu')
         self.to(self.device)
@@ -43,19 +47,25 @@ class Agent():
         self.Q_eval = DeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
                                    fc1_dims=256, fc2_dims=256)
         self.state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
-        self.new_state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
+        self.new_state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
         self.terminal_memory = np.zeros(self.mem_size, dtype=np.bool8)
 
     def store_transition(self, state, action, reward, state_, done):
+        """
+        Experience Replay
+        Storing experience data, creating replay buffer.
+        Replay Buffer: Experience array with length of max_mem_size=100000
+                       state_memory, action_memory, reward_memory,
+                       new_state_memory, terminal_memory
+        """
         index = self.mem_cntr % self.mem_size
         self.state_memory[index] = state
-        self.new_state_memory[index] = state_
-        self.reward_memory[index] = reward
         self.action_memory[index] = action
+        self.reward_memory[index] = reward
+        self.new_state_memory[index] = state_
         self.terminal_memory[index] = done
-
         self.mem_cntr += 1
 
     def choose_action(self, observation):
@@ -68,9 +78,19 @@ class Agent():
         return action
 
     def learn(self):
+        """
+        NOTE:
+        1. The number of stores equals "batch_size" means that DQN has enough data to learn.
+        2. During each DQN learning, zeroing out the gradient of the network's parameters to
+        avoid the accumulation of the gradient. ("self.Q_eval.optimizer.zero_grad()")
+        3. During each DQN learning, the Agent will learn from experiences with length of
+        "batch_size"
+        4. Q_eval.forward(state_batch): batch_size(64) * action_number(8) Tensor matrix
+           Q_eval.forward(state_batch)[batch_index, action_batch]: batch_size(64) Tensor vector
+        """
         if self.mem_cntr < self.batch_size:
             return
-        self.Q_eval.optimizer.zero_grad()
+        self.Q_eval.optimizer.zero_grad()  # zero out the gradients of the network's parameters
         max_mem = min(self.mem_cntr, self.mem_size)
         batch = np.random.choice(max_mem, self.batch_size, replace=False)
         batch_index = np.arange(self.batch_size, dtype=np.int32)
@@ -80,15 +100,12 @@ class Agent():
         reward_batch = T.tensor(self.reward_memory[batch]).to(self.Q_eval.device)
         terminal_batch = T.tensor(self.terminal_memory[batch]).to(self.Q_eval.device)
         action_batch = self.action_memory[batch]
-
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_eval.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
-
+        # End of ↓ '[0]' means get the value Tensor of T.max(q_next, dim=1)
         q_target = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
         loss.backward()
         self.Q_eval.optimizer.step()
-        # self.epsilon = self.epsilon - self.eps_dec if self.epsilon > self.epsilon_min else self.epsilon_min
-
