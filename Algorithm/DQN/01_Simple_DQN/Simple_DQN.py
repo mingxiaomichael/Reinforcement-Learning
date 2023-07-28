@@ -5,7 +5,7 @@ import torch.optim as optim
 import numpy as np
 
 
-class DeepQNetwork(nn.Module):
+class SimpleDeepQNetwork(nn.Module):
     """
     This is a simple Deep Q Network with experience replay: Using neural network to store
     data/experience, then using Q-learning to compute TD error (Q_target - Q_evaluate),
@@ -20,8 +20,9 @@ class DeepQNetwork(nn.Module):
 
     Input: state (len=8) --> DQN --> Output: Q value (len=4, 4 actions)
     """
+
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
-        super(DeepQNetwork, self).__init__()
+        super(SimpleDeepQNetwork, self).__init__()
         self.input_dims = input_dims
         self.fc1_dims = fc1_dims
         self.fc2_dims = fc2_dims
@@ -54,8 +55,8 @@ class Agent():
         self.batch_size = batch_size
         self.mem_cntr = 0
 
-        self.Q_eval = DeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
-                                   fc1_dims=256, fc2_dims=256)
+        self.Q_eval = SimpleDeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
+                                         fc1_dims=256, fc2_dims=256)
         # Define variable of storing experience for experience replay
         self.state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)

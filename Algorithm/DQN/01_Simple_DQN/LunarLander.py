@@ -1,22 +1,21 @@
 import gym
 import numpy as np
-from DQN import Agent
+from Simple_DQN import Agent
 
 
 if __name__ == "__main__":
     env = gym.make("LunarLander-v2")
-    # env = gym.make("LunarLander-v2")
     agent = Agent(gamma=0.99, epsilon=1.0, batch_size=64, n_actions=4, eps_end=0.01,
                   input_dims=[8], lr=0.003)
-    n_games = 300
-    n_learn_episodes = 200
+    n_episodes = 300
+    n_learn_steps = 200
     scores, eps_history = [], []
-    for i in range(n_games):
+    for i in range(n_episodes):
         score = 0
         done = False
         observation = env.reset()[0]
         j = 0
-        while (not done) and (j < agent.batch_size + n_learn_episodes):
+        while (not done) and (j < n_learn_steps):
             # env.render()
             action = agent.choose_action(observation)
             observation_, reward, done, info, _ = env.step(action)
@@ -35,11 +34,13 @@ if __name__ == "__main__":
 
     # Start Test
     env_new = gym.make("LunarLander-v2", render_mode="human")
-    show_episode = 50
-    for i in range(1, show_episode + 1):
+    show_episodes = 50
+    show_steps = 300
+    for i in range(1, show_episodes + 1):
         observation = env_new.reset()[0]
         done = False
-        while not done:
+        j = 0
+        while (not done) and (j < show_steps):
             env_new.render()
             action = agent.choose_action(observation)
             observation_, reward, done, info, _ = env_new.step(action)
@@ -47,3 +48,4 @@ if __name__ == "__main__":
             agent.store_transition(observation, action, reward, observation_, done)
             agent.learn()
             observation = observation_
+            j += 1
