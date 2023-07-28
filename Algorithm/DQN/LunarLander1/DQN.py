@@ -7,7 +7,17 @@ import numpy as np
 
 class DeepQNetwork(nn.Module):
     """
+    This is a simple Deep Q Network with experience replay: Using neural network to store
+    data/experience, then using Q-learning to compute TD error (Q_target - Q_evaluate),
+    Q_evaluate is Q(s, a) from neural network, Q_target is the max value of Q(s', a'),
+    where a' = {a1, a2, a3, a4}. Q(s', a') is from the same neural network as Q(s, a).
+
     The structure of Deep Q Network: 3 full connected layer
+
+    Experience Replay: The agent can be trained until having enough experience data, the
+    number of experience data is normally 10^4 ~ 10^5. Using experience replay can improve
+    the performance of reinforcement learning.
+
     Input: state (len=8) --> DQN --> Output: Q value (len=4, 4 actions)
     """
     def __init__(self, lr, input_dims, fc1_dims, fc2_dims, n_actions):
@@ -46,6 +56,7 @@ class Agent():
 
         self.Q_eval = DeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
                                    fc1_dims=256, fc2_dims=256)
+        # Define variable of storing experience for experience replay
         self.state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
         self.action_memory = np.zeros(self.mem_size, dtype=np.int32)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
@@ -103,9 +114,9 @@ class Agent():
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_next = self.Q_eval.forward(new_state_batch)
         q_next[terminal_batch] = 0.0
-        # End of ↓ '[0]' means get the value Tensor of T.max(q_next, dim=1)
+        # End of this code behind, '[0]' means get the value Tensor of T.max(q_next, dim=1)
         q_target = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
-        loss.backward()
-        self.Q_eval.optimizer.step()
+        loss.backward()  # Compute the gradient of Loss with respect to the network parameters
+        self.Q_eval.optimizer.step()  # gradient descent
