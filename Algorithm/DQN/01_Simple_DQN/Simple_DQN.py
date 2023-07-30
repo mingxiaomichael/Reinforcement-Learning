@@ -7,7 +7,7 @@ import numpy as np
 
 class SimpleDeepQNetwork(nn.Module):
     """
-    This is a simple Deep Q Network with experience replay: Using neural network to store
+    This is a simple Deep Q Network with experience replay: Using neural network to train
     data/experience, then using Q-learning to compute TD error (Q_target - Q_evaluate),
     Q_evaluate is Q(s, a) from neural network, Q_target is the max value of Q(s', a'),
     where a' = {a1, a2, a3, a4}. Q(s', a') is from the same neural network as Q(s, a).

@@ -4,20 +4,20 @@ import numpy as np
 from DQN import Agent
 
 
-def exponential_decay(x, i, decay_rate=0.02):
+def exponential_decay(initial, i, decay_rate=0.001):
     """
     Being used for decaying 'lr' and 'epsilon'
     """
-    x = x * math.exp(-decay_rate * i)
-    return x
+    return initial * math.exp(-decay_rate * i)
 
 
 if __name__ == "__main__":
     env = gym.make("LunarLander-v2")
     agent = Agent(gamma=0.99, epsilon=1.0, batch_size=64, n_actions=4,
-                  input_dims=[8], lr=0.003)
-    n_episodes = 300
-    n_learn_steps = 200
+                  input_dims=[8], lr=0.001)
+    n_episodes = 2000
+    n_learn_steps = 1000
+    initial_epsilon = agent.epsilon
     scores, eps_history = [], []
     for i in range(n_episodes):
         score = 0
@@ -35,6 +35,7 @@ if __name__ == "__main__":
             observation = observation_
             j += 1
         # agent.epsilon = agent.epsilon - agent.eps_dec if agent.epsilon > agent.epsilon_min else agent.epsilon_min
+        agent.epsilon = exponential_decay(initial_epsilon, i)
         scores.append(score)
         eps_history.append(agent.epsilon)
         avg_score = np.mean(scores[-50:])
