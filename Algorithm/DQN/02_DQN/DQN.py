@@ -1,16 +1,8 @@
-import random
-import sys
-from time import time
-from collections import deque, defaultdict, namedtuple
 import numpy as np
-import pandas as pd
-import gym
-import math
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import matplotlib.pyplot as plt
 
 
 class DeepQNetwork(nn.Module):
@@ -50,10 +42,10 @@ class Agent():
 
         # Evaluation Deep Q Network
         self.Q_eval = DeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
-                                   fc1_dims=256, fc2_dims=256)
+                                   fc1_dims=256, fc2_dims=64)
         # Fixed Deep Q Network
         self.Q_target = DeepQNetwork(self.lr, n_actions=n_actions, input_dims=input_dims,
-                                     fc1_dims=256, fc2_dims=256)
+                                     fc1_dims=256, fc2_dims=64)
 
         # Experience Replay Space
         self.state_memory = np.zeros((self.mem_size, *input_dims), dtype=np.float32)
