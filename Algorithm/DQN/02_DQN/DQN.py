@@ -106,7 +106,14 @@ class Agent():
             self.Q_target.load_state_dict(self.Q_eval.state_dict())
 
 
+"""
+In the traditional Deep Q-Learning (DQN) algorithm, it is standard to use two networks: the Q-network (also known 
+as the online network) and the target network. The reason for using two networks comes from the need to stabilize the 
+training process.
 
+We can use soft upgrade on Q_target network, in this way, the w (parameters) of Q_target can by upgraded
+smoothly.
+"""
 
 # https://chat.openai.com/share/4653cfff-e1a2-4202-b86c-b92aed0198f8
 
