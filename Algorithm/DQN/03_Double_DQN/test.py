@@ -1,9 +1,37 @@
-import gymnasium as gym
-import numpy as np
+import gym
 
-env = gym.make('Pendulum-v1', g=9.81)
-print("action_space: ", env.action_space.n)
-print("observation_space: ", env.observation_space.n)
+env = gym.make('Pendulum-v1', render_mode='human')
+
+num_episodes = 5
+max_steps_per_episode = 10
+observation = env.reset()[0]
+print(observation)
+
+for episode in range(num_episodes):
+    print(f"Episode {episode + 1}/{num_episodes}")
+    state = env.reset()
+    total_reward = 0
+
+    for step in range(max_steps_per_episode):
+        env.render()
+
+        action = env.action_space.sample()
+        action[0] = round(action[0], 1)
+
+        next_state, reward, _, _, _ = env.step(action)
+
+        total_reward += reward
+        state = next_state
+
+        print(f"Step {step + 1}/{max_steps_per_episode} - Action: {action}, State: {next_state}, Reward: {reward}")
+env.close()
+
+# import gymnasium as gym
+# import numpy as np
+#
+# env = gym.make('Pendulum-v1', g=9.81)
+# print("action_space: ", env.action_space.n)
+# print("observation_space: ", env.observation_space.n)
 # max_episodes = 1
 # max_steps = 100
 # scores = []
