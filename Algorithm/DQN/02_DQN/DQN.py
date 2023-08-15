@@ -29,7 +29,7 @@ class DeepQNetwork(nn.Module):
 
 class Agent():
     def __init__(self, gamma, epsilon, lr, input_dims, batch_size, n_actions,
-                 max_mem_size=100000, steps_to_update=25, tau=0.001):
+                 max_mem_size=100000, steps_to_update=25):
         self.gamma = gamma
         self.epsilon = epsilon
         self.lr = lr
@@ -37,7 +37,6 @@ class Agent():
         self.action_space = [i for i in range(n_actions)]
         self.mem_size = max_mem_size
         self.steps_to_update = steps_to_update
-        self.tau = tau
         self.mem_cntr = 0
 
         # Evaluation Deep Q Network
