@@ -86,19 +86,19 @@ class Agent():
         new_state_batch = T.tensor(self.new_state_memory[batch]).to(self.Q_eval.device)
         is_terminated_batch = T.tensor(self.is_terminated_memory[batch]).to(self.Q_eval.device)
 
-        self.Q_eval.optimizer.zero_grad()
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
-        with T.no_grad():
-            q_next = self.Q_target.forward(new_state_batch)
+        q_next = self.Q_target.forward(new_state_batch)
         # If is_terminated is True use reward, else update Q_target with discounted action values
         q_next[is_terminated_batch] = 0.0
         # End of this code behind, '[0]' means get the value Tensor of T.max(q_next, dim=1)
         q_target = reward_batch + self.gamma * T.max(q_next, dim=1)[0]
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)
+        self.Q_eval.optimizer.zero_grad()
         loss.backward()  # Compute the gradient of Loss with respect to the network parameters
-        self.Q_eval.optimizer.step()  # gradient descent
+        self.Q_eval.optimizer.step()  # gradient descent, update parameters of Q_eval
         self.update_Q_target(self.steps_to_update)
+
 
     def update_Q_target(self, steps_to_update):
         learn_steps = self.mem_cntr - self.batch_size
