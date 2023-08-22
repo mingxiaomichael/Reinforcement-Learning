@@ -89,7 +89,8 @@ class Agent():
 
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_eval_next = self.Q_eval.forward(new_state_batch)
-        q_next = self.Q_target.forward(new_state_batch)[batch_index, q_eval_next.max(1)[1].numpy()]
+        with T.no_grad():
+            q_next = self.Q_target.forward(new_state_batch)[batch_index, q_eval_next.max(1)[1].numpy()]
         q_target = reward_batch + self.gamma * q_next
 
         loss = self.Q_eval.loss(q_target, q_eval).to(self.Q_eval.device)

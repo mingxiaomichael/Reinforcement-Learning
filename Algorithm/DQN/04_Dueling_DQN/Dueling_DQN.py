@@ -96,7 +96,8 @@ class Agent():
 
         q_eval = self.Q_eval.forward(state_batch)[batch_index, action_batch]
         q_eval_next = self.Q_eval.forward(new_state_batch)
-        q_next = self.Q_target.forward(new_state_batch)[batch_index, q_eval_next.max(1)[1].numpy()]
+        with T.no_grad():
+            q_next = self.Q_target.forward(new_state_batch)[batch_index, q_eval_next.max(1)[1].numpy()]
         q_next[is_terminated_batch] = 0.0
         q_target = reward_batch + self.gamma * q_next
 
