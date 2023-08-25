@@ -13,7 +13,7 @@ def exponential_decay(initial, i, decay_rate=0.01):
 
 
 if __name__ == "__main__":
-    env = gym.make("Pendulum-v1")
+    env = gym.make("CartPole-v1")
     action_space = np.round(np.arange(-2, 2.01, 0.1), 1)
     agent = Agent(gamma=0.99, epsilon=1.0, lr=0.001, input_dims=[3], batch_size=64,
                   n_actions=len(action_space))
@@ -44,7 +44,7 @@ if __name__ == "__main__":
 
     # Start Test
     agent_test = agent
-    env_new = gym.make("Pendulum-v1", render_mode="human")
+    env_new = gym.make("CartPole-v1", render_mode="human")
     show_episodes = 20
     show_steps = 100
     agent_test.epsilon = 0

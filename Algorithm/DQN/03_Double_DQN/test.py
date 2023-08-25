@@ -1,6 +1,6 @@
 import gym
 
-env = gym.make('Pendulum-v1', render_mode='human')
+env = gym.make('CartPole-v1', render_mode='human')
 
 num_episodes = 5
 max_steps_per_episode = 10
@@ -29,7 +29,7 @@ env.close()
 # import gymnasium as gym
 # import numpy as np
 #
-# env = gym.make('Pendulum-v1', g=9.81)
+# env = gym.make('CartPole-v1', g=9.81)
 # print("action_space: ", env.action_space.n)
 # print("observation_space: ", env.observation_space.n)
 # max_episodes = 1
