@@ -56,13 +56,14 @@ class Agent():
         # Transfer (4,) list to (1, 4) Tensor
         state = T.from_numpy(state).float().unsqueeze(0)
         # probs: policy (the probability of action), (1, 2) Tensor
-        probs = self.PolicyNet.forward(state)
+        with T.no_grad:
+            probs = self.PolicyNet.forward(state)
         p = np.squeeze(probs.detach().numpy())
         # sampling action according to probability distribution
-        highest_prob_action = np.random.choice(self.action_space, p=p)
+        action = np.random.choice(self.action_space, p=p)
         # log(prob)
-        log_prob = T.log(probs.squeeze(0)[highest_prob_action])
-        return highest_prob_action, log_prob
+        log_prob = T.log(probs.squeeze(0)[action])
+        return action, log_prob
         # probs: tensor([[0.5784, 0.4216]], grad_fn= < SoftmaxBackward0 >)
         # probs.detach(): tensor([[0.5784, 0.4216]])
         # probs.squeeze(0): tensor([0.5784, 0.4216], grad_fn= < SqueezeBackward1 >)
