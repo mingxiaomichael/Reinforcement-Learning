@@ -56,7 +56,7 @@ class Agent():
         # Transfer (4,) list to (1, 4) Tensor
         state = T.from_numpy(state).float().unsqueeze(0)
         # probs: policy (the probability of action), (1, 2) Tensor
-        with T.no_grad:
+        with T.no_grad():
             probs = self.PolicyNet.forward(state)
         p = np.squeeze(probs.detach().numpy())
         # sampling action according to probability distribution
