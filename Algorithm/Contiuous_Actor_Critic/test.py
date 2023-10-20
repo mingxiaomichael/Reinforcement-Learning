@@ -5,16 +5,20 @@ from Actor_Critic_improve import ActorCriticAgent
 
 
 if __name__ == '__main__':
-    agent = ActorCriticAgent(input_dims=2, p_fc_dims=[128, 64], v_fc_dims=[128, 64], n_actions=1,
+    agent = ActorCriticAgent(input_dims=2, p_fc_dims=[64, 32], v_fc_dims=[64, 32], n_actions=1,
                              lr_p=0.001, lr_v=0.001, gamma=0.99)
+    # env = gym.make('MountainCarContinuous-v0', render_mode="human")
     env = gym.make('MountainCarContinuous-v0')
     scores = []
-    num_episodes = 100
+    num_episodes = 200
+    steps = 1000
     for i in range(num_episodes):
         done = False
         score = 0
         state = env.reset()[0]
-        while not done:
+        # while not done:
+        step = 0
+        while step < steps:
             action, log_prob, _ = agent.ac.forward(state)
             action = np.array(action).reshape((1,))
             next_state, reward, done, info, _ = env.step(action)
@@ -24,6 +28,8 @@ if __name__ == '__main__':
             agent.learn()
             state = next_state
             score += reward
+            step += 1
+            # print(step)
         scores.append(score)
         print('episode: ', i, 'score: %.2f' % score)
 

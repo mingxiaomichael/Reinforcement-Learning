@@ -44,7 +44,7 @@ class ActorCritic(nn.Module):
 
 class ActorCriticAgent(object):
     def __init__(self, input_dims, p_fc_dims, v_fc_dims, n_actions, lr_p, lr_v, gamma,
-                 batch_size=64, max_mem_size=100000, steps_to_update=25):
+                 batch_size=32, max_mem_size=1000, steps_to_update=25):
         self.n_actions = n_actions
         self.lr_p = lr_p
         self.lr_v = lr_v
@@ -110,12 +110,15 @@ class ActorCriticAgent(object):
         # If is_terminated is True use reward, else update Q_target with discounted action values
         q_next[is_terminated_batch] = 0.0
         # End of this code behind, '[0]' means get the value Tensor of T.max(q_next, dim=1)
-        q_target = reward_batch.reshape(64, 1) + self.gamma * q_next
-
+        q_target = reward_batch.reshape(32, 1) + self.gamma * q_next
+        
+        # the optimizer of Actor network
         optimizer_p = optim.Adam(self.ac.parameters(), lr=self.lr_p)
         optimizer_p.zero_grad()
-        loss_p = -1 * log_prob_batch.reshape(64, 1) * ((q_eval - q_target).detach())
+        loss_p = -1 * log_prob_batch.reshape(32, 1) * ((q_eval - q_target).detach())
         loss_p.sum().backward(retain_graph=True)
+
+        # the optimizer of Critic network
         optimizer_v = optim.Adam(self.ac.parameters(), lr=self.lr_v)
         optimizer_v.zero_grad()
         loss_v = 0.5 * T.mean((q_eval - q_target) ** 2)
