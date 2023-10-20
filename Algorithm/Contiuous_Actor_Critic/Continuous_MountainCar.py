@@ -8,7 +8,7 @@ if __name__ == '__main__':
     agent = Agent(alpha=0.000005, beta=0.00001, input_dims=[2], gamma=0.99,
                   layer1_size=256, layer2_size=256)
 
-    env = gym.make('MountainCarContinuous-v0')
+    env = gym.make('MountainCarContinuous-v0', render_mode="human")
     scores = []
     num_episodes = 100
     for i in range(num_episodes):
