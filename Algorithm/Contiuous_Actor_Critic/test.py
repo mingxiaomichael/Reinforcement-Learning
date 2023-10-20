@@ -27,8 +27,8 @@ if __name__ == '__main__':
         scores.append(score)
         print('episode: ', i, 'score: %.2f' % score)
 
-    torch.save(agent.agent_model.state_dict(), 'model.pth')
-    torch.save(agent.agent_model_target.state_dict(), 'target_model.pth')
+    torch.save(agent.ac.state_dict(), 'ac.pth')
+    torch.save(agent.ac_target.state_dict(), 'ac_target.pth')
 
     file_name = "scores.txt"
     with open(file_name, "w") as file:
