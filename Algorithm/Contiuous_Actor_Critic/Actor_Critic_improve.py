@@ -1,7 +1,6 @@
 import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
-from torch.autograd import Variable
 import torch.optim as optim
 import numpy as np
 
@@ -30,57 +29,49 @@ class ActorCritic(nn.Module):
         x = F.relu(self.p_fc2(x))
         mu = F.tanh(self.mu(x))
         log_sigma = self.log_sigma(x)
-        distribution = T.distributions.Normal(mu, log_sigma.exp())
-        action = distribution.sample()
-        log_prob = distribution.log_prob(action)
-        action = T.tanh(action)
-
         # Critic
         x = F.relu(self.v_fc1(state))
         x = F.relu(self.v_fc2(x))
         v = self.v(x)
-        return action, log_prob, v
+        return mu, log_sigma, v
 
 
 class ActorCriticAgent(object):
     def __init__(self, input_dims, p_fc_dims, v_fc_dims, n_actions, lr_p, lr_v, gamma,
-                 batch_size=32, max_mem_size=1000, steps_to_update=25):
+                 batch_size=32, max_mem_size=10000, steps_to_update=50):
         self.n_actions = n_actions
         self.lr_p = lr_p
         self.lr_v = lr_v
         self.gamma = gamma
-        # self.log_prob = None
+        self.log_prob = None
 
         self.ac = ActorCritic(input_dims, p_fc_dims, v_fc_dims, self.n_actions)
         self.ac_target = ActorCritic(input_dims, p_fc_dims, v_fc_dims, self.n_actions)
-        # self.actor = ActorCritic(input_dims, p_fc_dims, v_fc_dims, self.n_actions)
 
         self.batch_size = batch_size
         self.mem_cntr = 0
         self.mem_size = max_mem_size
         self.state_memory = np.zeros((self.mem_size, input_dims), dtype=np.float32)
-        self.log_prob_memory = T.zeros(self.mem_size)
+        self.log_prob_memory = T.zeros(self.mem_size).to(self.ac.device)
         self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
         self.new_state_memory = np.zeros((self.mem_size, input_dims), dtype=np.float32)
         self.is_terminated_memory = np.zeros(self.mem_size, dtype=np.bool8)
 
         self.steps_to_update = steps_to_update
 
-    # def choose_action(self, state):
-    #     mu, log_sigma, _ = self.ac.forward(state)
-    #     print(self.mem_cntr)
-    #     print(mu, log_sigma)
-    #     distribution = T.distributions.Normal(mu, log_sigma.exp())
-    #     action = distribution.sample()
-    #     self.log_prob = distribution.log_prob(action).to(self.ac.device)
-    #     print(self.log_prob)
-    #     action = T.tanh(action)
-    #     return action.item()
+    def choose_action(self, state):
+        mu, log_sigma, _ = self.ac.forward(state)
+        distribution = T.distributions.Normal(mu, log_sigma.exp())
+        action = distribution.sample()
+        action.to(self.ac.device)
+        self.log_prob = distribution.log_prob(action).to(self.ac.device)
+        action = T.tanh(action)
+        return action.item()
 
-    def store_transition(self, state, log_prob, reward, next_action, is_terminated):
+    def store_transition(self, state, reward, next_action, is_terminated):
         index = self.mem_cntr % self.mem_size
         self.state_memory[index] = state
-        self.log_prob_memory[index] = log_prob
+        self.log_prob_memory[index] = self.log_prob
         self.reward_memory[index] = reward
         self.new_state_memory[index] = next_action
         self.is_terminated_memory[index] = is_terminated
@@ -99,7 +90,6 @@ class ActorCriticAgent(object):
         # Training Batch
         state_batch = T.tensor(self.state_memory[batch]).to(self.ac.device)
         log_prob_batch = self.log_prob_memory[batch]
-        # print("self.log_prob_memory[batch]: ", self.log_prob_memory[batch])
         reward_batch = T.tensor(self.reward_memory[batch]).to(self.ac.device)
         new_state_batch = T.tensor(self.new_state_memory[batch]).to(self.ac.device)
         is_terminated_batch = T.tensor(self.is_terminated_memory[batch]).to(self.ac.device)
@@ -111,7 +101,7 @@ class ActorCriticAgent(object):
         q_next[is_terminated_batch] = 0.0
         # End of this code behind, '[0]' means get the value Tensor of T.max(q_next, dim=1)
         q_target = reward_batch.reshape(32, 1) + self.gamma * q_next
-        
+
         # the optimizer of Actor network
         optimizer_p = optim.Adam(self.ac.parameters(), lr=self.lr_p)
         optimizer_p.zero_grad()
