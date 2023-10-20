@@ -1,4 +1,4 @@
-import numpy as np
+import cupy as np
 import gym
 import torch
 from Actor_Critic_improve import ActorCriticAgent
@@ -25,6 +25,8 @@ if __name__ == '__main__':
             state = next_state
             score += reward
             step += 1
+            if step % 50 == 0:
+                print(step)
         scores.append(score)
         print('episode: ', i, 'score: %.2f' % score)
 
