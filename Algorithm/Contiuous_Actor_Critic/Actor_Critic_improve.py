@@ -2,7 +2,7 @@ import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import cupy as np
+import numpy as np
 
 
 class ActorCritic(nn.Module):
@@ -23,7 +23,6 @@ class ActorCritic(nn.Module):
         self.to(self.device)
 
     def forward(self, state):
-        state = T.tensor(state, dtype=T.float).to(self.device)
         # Actor
         x = F.relu(self.p_fc1(state))
         x = F.relu(self.p_fc2(x))
@@ -51,15 +50,16 @@ class ActorCriticAgent(object):
         self.batch_size = batch_size
         self.mem_cntr = 0
         self.mem_size = max_mem_size
-        self.state_memory = np.zeros((self.mem_size, input_dims), dtype=np.float32)
+        self.state_memory = T.zeros(self.mem_size, input_dims, dtype=T.float32).to(self.ac.device)
         self.log_prob_memory = T.zeros(self.mem_size).to(self.ac.device)
-        self.reward_memory = np.zeros(self.mem_size, dtype=np.float32)
-        self.new_state_memory = np.zeros((self.mem_size, input_dims), dtype=np.float32)
-        self.is_terminated_memory = np.zeros(self.mem_size, dtype=np.bool8)
+        self.reward_memory = T.zeros(self.mem_size, dtype=T.float32).to(self.ac.device)
+        self.next_state_memory = T.zeros(self.mem_size, input_dims, dtype=T.float32).to(self.ac.device)
+        self.is_terminated_memory = T.zeros(self.mem_size, dtype=T.bool).to(self.ac.device)
 
         self.steps_to_update = steps_to_update
 
     def choose_action(self, state):
+        state = T.tensor(state, dtype=T.float).to(self.ac.device)
         mu, log_sigma, _ = self.ac.forward(state)
         distribution = T.distributions.Normal(mu, log_sigma.exp())
         action = distribution.sample()
@@ -68,12 +68,16 @@ class ActorCriticAgent(object):
         action = T.tanh(action)
         return action.item()
 
-    def store_transition(self, state, reward, next_action, is_terminated):
+    def store_transition(self, state, reward, next_state, is_terminated):
+        state = T.from_numpy(state)
+        next_state = T.from_numpy(next_state)
+        # print("tensor mode: ")
+        # print(state, reward, next_state, is_terminated)
         index = self.mem_cntr % self.mem_size
         self.state_memory[index] = state
         self.log_prob_memory[index] = self.log_prob
         self.reward_memory[index] = reward
-        self.new_state_memory[index] = next_action
+        self.next_state_memory[index] = next_state
         self.is_terminated_memory[index] = is_terminated
         self.mem_cntr += 1
 
@@ -88,12 +92,16 @@ class ActorCriticAgent(object):
         max_mem = min(self.mem_cntr, self.mem_size)
         batch = np.random.choice(max_mem, self.batch_size, replace=False)
         # Training Batch
-        state_batch = T.tensor(self.state_memory[batch]).to(self.ac.device)
+        state_batch = self.state_memory[batch]
         log_prob_batch = self.log_prob_memory[batch]
-        reward_batch = T.tensor(self.reward_memory[batch]).to(self.ac.device)
-        new_state_batch = T.tensor(self.new_state_memory[batch]).to(self.ac.device)
-        is_terminated_batch = T.tensor(self.is_terminated_memory[batch]).to(self.ac.device)
-        # self.critic.load_state_dict(self.actor.state_dict())
+        reward_batch = self.reward_memory[batch]
+        new_state_batch = self.next_state_memory[batch]
+        is_terminated_batch = self.is_terminated_memory[batch]
+        # print("state_batch: ", state_batch)
+        # print("log_prob_batch: ", log_prob_batch)
+        # print("reward_batch: ", reward_batch)
+        # print("new_state_batch: ", new_state_batch)
+        # print("is_terminated_batch: ", is_terminated_batch)
         _, _, q_eval = self.ac.forward(state_batch)
         with T.no_grad():
             _, _, q_next = self.ac_target.forward(new_state_batch)

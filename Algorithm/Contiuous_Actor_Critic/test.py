@@ -1,4 +1,4 @@
-import cupy as np
+import numpy as np
 import gym
 import torch
 from Actor_Critic_improve import ActorCriticAgent
@@ -10,7 +10,7 @@ if __name__ == '__main__':
     env = gym.make('MountainCarContinuous-v0')
     scores = []
     num_episodes = 200
-    steps = 1000
+    steps = 500
     for i in range(num_episodes):
         done = False
         score = 0
@@ -20,12 +20,14 @@ if __name__ == '__main__':
         while step < steps:
             action = np.array(agent.choose_action(state)).reshape((1,))
             next_state, reward, done, info, _ = env.step(action)
+            # print("original mode: ")
+            # print(state, reward, next_state, done)
             agent.store_transition(state, reward, next_state, done)
             agent.learn()
             state = next_state
             score += reward
             step += 1
-            if step % 50 == 0:
+            if step % 100 == 0:
                 print(step)
         scores.append(score)
         print('episode: ', i, 'score: %.2f' % score)
