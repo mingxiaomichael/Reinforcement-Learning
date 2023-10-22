@@ -37,7 +37,7 @@ class ActorCritic(nn.Module):
 
 class ActorCriticAgent(object):
     def __init__(self, input_dims, p_fc_dims, v_fc_dims, n_actions, lr_p, lr_v, gamma,
-                 batch_size=32, max_mem_size=10000, steps_to_update=50):
+                 batch_size=16, max_mem_size=1000, steps_to_update=32):
         self.n_actions = n_actions
         self.lr_p = lr_p
         self.lr_v = lr_v
@@ -62,17 +62,15 @@ class ActorCriticAgent(object):
         state = T.tensor(state, dtype=T.float).to(self.ac.device)
         mu, log_sigma, _ = self.ac.forward(state)
         distribution = T.distributions.Normal(mu, log_sigma.exp())
-        action = distribution.sample()
+        action = distribution.rsample()
         action.to(self.ac.device)
         self.log_prob = distribution.log_prob(action).to(self.ac.device)
-        action = T.tanh(action)
+        action = T.clamp(action, min=-1, max=1)
         return action.item()
 
     def store_transition(self, state, reward, next_state, is_terminated):
         state = T.from_numpy(state)
         next_state = T.from_numpy(next_state)
-        # print("tensor mode: ")
-        # print(state, reward, next_state, is_terminated)
         index = self.mem_cntr % self.mem_size
         self.state_memory[index] = state
         self.log_prob_memory[index] = self.log_prob
@@ -108,19 +106,21 @@ class ActorCriticAgent(object):
         # If is_terminated is True use reward, else update Q_target with discounted action values
         q_next[is_terminated_batch] = 0.0
         # End of this code behind, '[0]' means get the value Tensor of T.max(q_next, dim=1)
-        q_target = reward_batch.reshape(32, 1) + self.gamma * q_next
+        q_target = reward_batch.reshape(16, 1) + self.gamma * q_next
 
         # the optimizer of Actor network
         optimizer_p = optim.Adam(self.ac.parameters(), lr=self.lr_p)
         optimizer_p.zero_grad()
-        loss_p = -1 * log_prob_batch.reshape(32, 1) * ((q_eval - q_target).detach())
+        loss_p = -1 * log_prob_batch.reshape(16, 1) * ((q_eval - q_target).detach())
+        # print(-loss_p.sum())
         loss_p.sum().backward(retain_graph=True)
 
         # the optimizer of Critic network
         optimizer_v = optim.Adam(self.ac.parameters(), lr=self.lr_v)
         optimizer_v.zero_grad()
         loss_v = 0.5 * T.mean((q_eval - q_target) ** 2)
-        loss_v.sum().backward(retain_graph=True)
+        # print(loss_v)
+        loss_v.backward()
 
         optimizer_p.step()
         optimizer_v.step()
