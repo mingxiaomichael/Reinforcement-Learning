@@ -25,7 +25,7 @@ class GridworldEnv(discrete.DiscreteEnv):
     You are an agent on an MxN grid and your goal is to reach the terminal
     state at the top left or the bottom right corner.
 
-    For example, a 5x5 grid looks as follows:
+    For ContinuousMountainCar, a 5x5 grid looks as follows:
 
     o  o  o  o  o
     o  o  o  T  o   # DONE_LOCATION == 8

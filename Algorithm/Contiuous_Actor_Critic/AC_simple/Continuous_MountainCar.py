@@ -55,7 +55,7 @@ if __name__ == '__main__':
         print('episode: ', i, 'score: %.2f' % score)
 
     torch.save(agent.actor.state_dict(), 'actor.pth')
-    torch.save(agent.critic.state_dict(), 'critic.pth')
+    torch.save(agent.critic.state_dict(), 'actor.pth')
 
     file_name = "scores.txt"
     with open(file_name, "w") as file:

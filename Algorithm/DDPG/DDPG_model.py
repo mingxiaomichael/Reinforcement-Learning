@@ -2,9 +2,7 @@ import torch as T
 import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
-import os
 import numpy as np
-import matplotlib.pyplot as plt
 
 
 class ActorNetwork(nn.Module):
@@ -13,14 +11,31 @@ class ActorNetwork(nn.Module):
         self.input_dims = input_dims
         self.fc_dims = fc_dims
         self.n_actions = n_actions
+
         self.fc1 = nn.Linear(self.input_dims, self.fc_dims[0])
+        f1 = 1./np.sqrt(self.fc1.weight.data.size()[0])  # 1/8
+        T.nn.init.uniform_(self.fc1.weight.data, -f1, f1)
+        T.nn.init.uniform_(self.fc1.bias.data, -f1, f1)
+        self.bn1 = nn.LayerNorm(self.fc_dims[0])
+
         self.fc2 = nn.Linear(self.fc_dims[0], self.fc_dims[1])
+        f2 = 1. / np.sqrt(self.fc2.weight.data.size()[0])  # 1/8
+        T.nn.init.uniform_(self.fc2.weight.data, -f2, f2)
+        T.nn.init.uniform_(self.fc2.bias.data, -f2, f2)
+        self.bn2 = nn.LayerNorm(self.fc_dims[1])
+
         self.mu = nn.Linear(self.fc_dims[1], self.n_actions)
+        T.nn.init.uniform_(self.mu.weight.data, -0.003, 0.003)
+        T.nn.init.uniform_(self.mu.bias.data, -0.003, 0.003)
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, state):
-        x = F.relu(self.fc1(state))
-        x = F.relu(self.fc2(x))
+        x = self.fc1(state)
+        x = self.bn1(x)
+        x = F.relu(x)
+        x = self.fc2(x)
+        x = self.bn2(x)
+        x = F.relu(x)
         mu = T.tanh(self.mu(x))
         return mu
 
@@ -31,15 +46,33 @@ class CriticNetwork(nn.Module):
         self.input_dims = input_dims
         self.fc_dims = fc_dims
         self.n_actions = n_actions
+
         self.fc1 = nn.Linear(self.input_dims, self.fc_dims[0])
+        f1 = 1. / np.sqrt(self.fc1.weight.data.size()[0])  # 1/8
+        T.nn.init.uniform_(self.fc1.weight.data, -f1, f1)
+        T.nn.init.uniform_(self.fc1.bias.data, -f1, f1)
+        self.bn1 = nn.LayerNorm(self.fc_dims[0])
+
         self.fc2 = nn.Linear(self.fc_dims[0], self.fc_dims[1])
+        f2 = 1. / np.sqrt(self.fc2.weight.data.size()[0])  # 1/8
+        T.nn.init.uniform_(self.fc2.weight.data, -f2, f2)
+        T.nn.init.uniform_(self.fc2.bias.data, -f2, f2)
+        self.bn2 = nn.LayerNorm(self.fc_dims[1])
+
         self.fc3 = nn.Linear(self.n_actions, self.fc_dims[1])
         self.q = nn.Linear(self.fc_dims[1], 1)
+        T.nn.init.uniform_(self.q.weight.data, -0.003, 0.003)
+        T.nn.init.uniform_(self.q.bias.data, -0.003, 0.003)
+
         self.optimizer = optim.Adam(self.parameters(), lr=lr)
 
     def forward(self, state, action):
-        x1 = F.relu(self.fc1(state))
-        x1 = F.relu(self.fc2(x1))
+        x1 = self.fc1(state)
+        x1 = self.bn1(x1)
+        x1 = F.relu(x1)
+        x1 = self.fc2(x1)
+        x1 = self.bn2(x1)
+        x1 = F.relu(x1)
         x2 = F.relu(self.fc3(action))
         q = F.relu(T.add(x1, x2))
         q = self.q(q)
@@ -81,7 +114,7 @@ class ReplayBuffer(object):
         self.action_memory[index] = action
         self.reward_memory[index] = reward
         self.next_state_memory[index] = next_state
-        self.terminal_memory[index] = done
+        self.terminal_memory[index] = 1 - done
         self.counter += 1
 
     def sample_buffer(self, batch_size):
@@ -97,7 +130,7 @@ class ReplayBuffer(object):
 
 class DDPG(object):
     def __init__(self, alpha, beta, gamma, input_dims, fc_dims, n_actions,
-                 tau, device, max_size=50000, batch_size=512):
+                 tau, device, max_size=50000, batch_size=64):
         self.gamma = gamma
         self.tau = tau
         self.device = device

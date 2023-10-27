@@ -18,7 +18,7 @@ this python file can be used directly, do not use gym
 
 class GridworldEnv:
     """
-    For example, a 5x5 grid looks as follows:
+    For ContinuousMountainCar, a 5x5 grid looks as follows:
 
     s  o  o  x  x
     o  o  o  x  o   # DONE_LOCATION == 24
